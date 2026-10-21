@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Chat Reader</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="top">
+    <span class="brand">Chat Reader</span>
+    <span class="ver" id="ver"></span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="typography">排版</button>
+    <button role="tab" data-tab="status">适配状态</button>
+  </nav>
+
+  <section class="panel" id="panel-typography" hidden>
+    <p class="hint">排版设置将在下一步加入。</p>
+  </section>
+
+  <section class="panel" id="panel-status" hidden>
+    <div class="status-head">
+      <span id="status-site" class="muted"></span>
+      <button id="btn-refresh" class="btn-small">重新检测</button>
+    </div>
+    <ul id="status-list" class="status-list"></ul>
+    <p class="hint">
+      ✓ 正常　⚠ 能用但网站可能改版了　✗ 没找到<br>
+      哪一项出问题，把这个弹窗截图发给开发者即可。
+    </p>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>

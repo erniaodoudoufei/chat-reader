@@ -1,0 +1,112 @@
+:root {
+  --bg: #faf9f5;
+  --fg: #2b2a27;
+  --muted: #7a776e;
+  --line: #e4e1d8;
+  --accent: #c96442;
+  --ok: #2f8a4c;
+  --warn: #b7791f;
+  --fail: #c53030;
+  --card: #ffffff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #262624;
+    --fg: #eceae4;
+    --muted: #a19e95;
+    --line: #3d3c38;
+    --accent: #d97757;
+    --ok: #5cbf7a;
+    --warn: #e0a84a;
+    --fail: #f07171;
+    --card: #30302e;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  width: 380px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.5 "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 14px 6px;
+}
+.brand { font-weight: 600; font-size: 15px; }
+.ver, .muted { color: var(--muted); font-size: 12px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+.tabs button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 8px 10px;
+  font: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tabs button[aria-selected="true"] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.panel { padding: 10px 14px 14px; }
+.hint { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+
+.status-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.btn-small {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  cursor: pointer;
+}
+.btn-small:hover { border-color: var(--accent); }
+
+.status-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.status-list li {
+  display: grid;
+  grid-template-columns: 18px 118px 1fr;
+  gap: 6px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--line);
+}
+.status-list li:first-child { border-top: 0; }
+.status-list .icon { font-weight: 700; text-align: center; }
+.status-list .label { color: var(--muted); }
+.status-list .detail { word-break: break-all; }
+.s-ok .icon { color: var(--ok); }
+.s-warn .icon, .s-warn .detail { color: var(--warn); }
+.s-fail .icon, .s-fail .detail { color: var(--fail); }
+.s-info .icon { color: var(--muted); }
+.status-list .empty { display: block; color: var(--muted); padding: 14px 10px; }
