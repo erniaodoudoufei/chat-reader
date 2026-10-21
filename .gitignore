@@ -1,0 +1,7 @@
+# 页面样本里有私人聊天内容，不进 git
+samples/
+
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
