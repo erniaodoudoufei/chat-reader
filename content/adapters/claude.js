@@ -143,7 +143,8 @@
   }
 
   // —— 从 Claude 接口读取整段对话 ——
-  // 返回当前分支上的全部消息：[{ index, role: 'user'|'assistant', text, uuid }]
+  // 返回 { title, messages }，messages 是当前分支上、按页面显示方式合并后的消息：
+  // [{ index, role: 'user'|'assistant', text, uuid }]
   // 注意：这是 Claude 网页自己用的内部接口，不是公开 API，将来可能变化；出错时调用方要能降级。
 
   async function getOrgIds() {
@@ -190,15 +191,21 @@
     chain.reverse();
     if (!chain.length) chain = [...msgs].sort((a, b) => a.index - b.index);
 
-    return {
-      title: data.name || null,
-      messages: chain.map((m, i) => ({
-        index: i,
-        role: m.sender === 'human' ? 'user' : 'assistant',
-        text: messageText(m),
-        uuid: m.uuid,
-      })),
-    };
+    // 接口里可能有"连着的几条 AI 消息"（比如一条只调用了工具、下一条接着回答，或者一条空消息），
+    // 页面上会把它们合并成一行显示。这里也合并，序号才能和页面对上。（2026-10 实测）
+    const merged = [];
+    for (const m of chain) {
+      const role = m.sender === 'human' ? 'user' : 'assistant';
+      const prev = merged[merged.length - 1];
+      const text = messageText(m);
+      if (prev && prev.role === 'assistant' && role === 'assistant') {
+        if (text) prev.text = prev.text ? prev.text + '\n' + text : text;
+      } else {
+        merged.push({ index: merged.length, role, text, uuid: m.uuid });
+      }
+    }
+
+    return { title: data.name || null, messages: merged };
   }
 
   // —— 自检：给弹窗"适配状态"用 ——
