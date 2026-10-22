@@ -17,7 +17,26 @@
   </nav>
 
   <section class="panel" id="panel-typography" hidden>
-    <p class="hint">排版设置将在下一步加入。</p>
+    <label class="switch-row">
+      <input type="checkbox" id="ty-enabled">
+      <span>启用排版调整</span>
+    </label>
+
+    <div id="ty-body">
+      <h3>字体</h3>
+      <div id="ty-fonts"></div>
+      <p class="hint">字体要先安装在电脑上才能生效。下拉项后面有 ✓ 的是检测到已安装的；也可以选"手动输入"，填电脑里任意字体的名字。</p>
+
+      <h3>大小与间距 <span class="h-note">点 ↺ 恢复这一项的默认值</span></h3>
+      <div id="ty-sliders"></div>
+
+      <h3>预设</h3>
+      <div id="ty-presets"></div>
+
+      <div class="actions">
+        <button id="ty-reset" class="btn">全部恢复默认</button>
+      </div>
+    </div>
   </section>
 
   <section class="panel" id="panel-status" hidden>
@@ -32,6 +51,7 @@
     </p>
   </section>
 
+  <script src="../shared/defaults.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

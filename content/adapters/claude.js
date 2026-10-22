@@ -34,6 +34,8 @@
     composer: ['[data-chat-input-container="true"]', '[data-testid="chat-input"]', '[role="textbox"][contenteditable="true"]'],
     // 回复正文（Markdown 渲染区域）
     markdown: ['.standard-markdown', '[data-cds="Prose"]'],
+    // 回复正文的外层容器（Claude 的字号、行距、段落间距变量定义在它身上）
+    prose: ['[data-cds="Prose"]', '.prose'],
     // 数学公式（KaTeX 库自带的 class，很稳定）
     katex: ['.katex'],
     // 代码块
@@ -47,8 +49,17 @@
     userMessage: css('userMessage'),
     assistantMessage: css('assistantMessage'),
     markdown: css('markdown'),
+    prose: css('prose'),
     katex: css('katex'),
     codeBlock: css('codeBlock'),
+  };
+
+  // 只有 Claude 才有的排版"开关"（CSS 变量）。用它们比硬改元素更稳：标题、列表等会按 Claude 自己的比例跟着变
+  const STYLE_HOOKS = {
+    // 对话区宽度：消息列表和输入框共用 --transcript-width
+    contentWidth: (px) => `${css('chatColumn')} { --transcript-width: ${px}px !important; }`,
+    // 段落间距：Claude 用 --_prose-flow-base 控制段落、列表、标题之间的距离（标题前后是它的倍数）
+    paragraphSpacing: (em) => `${css('prose')} { --_prose-flow-base: ${em}em !important; }`,
   };
 
   // —— 基础信息 ——
@@ -269,6 +280,7 @@
     });
 
     items.push(selectorItem('回复正文区域', 'markdown', { all: true }));
+    items.push(selectorItem('回复正文容器（字号行距）', 'prose', { all: true }));
     items.push(selectorItem('输入框', 'composer'));
     items.push(selectorItem('数学公式', 'katex', { all: true, required: false }));
     items.push(selectorItem('代码块', 'codeBlock', { all: true, required: false }));
@@ -308,6 +320,7 @@
     checkAlignment,
     fetchTranscript,
     styleTargets: STYLE_TARGETS,
+    styleHooks: STYLE_HOOKS,
     diagnose,
   };
 })();
