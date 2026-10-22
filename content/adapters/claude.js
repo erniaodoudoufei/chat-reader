@@ -60,6 +60,9 @@
     contentWidth: (px) => `${css('chatColumn')} { --transcript-width: ${px}px !important; }`,
     // 段落间距：Claude 用 --_prose-flow-base 控制段落、列表、标题之间的距离（标题前后是它的倍数）
     paragraphSpacing: (em) => `${css('prose')} { --_prose-flow-base: ${em}em !important; }`,
+    // 在对话区右边留出空位（给目录面板）：加在对话栏的外层上，对话栏会在剩下的空间里居中
+    reserveRightSpace: (px) =>
+      `div:has(> :is(${css('chatColumn')})) { padding-right: ${px}px !important; transition: padding-right .2s ease; }`,
   };
 
   // —— 基础信息 ——
@@ -320,6 +323,7 @@
     getTheme,
     getScrollContainer: () => findScrollContainer().el,
     getTranscriptRoot: () => queryFirst(SEL.transcript).el,
+    getChatColumn: () => queryFirst(SEL.chatColumn).el,
     getComposer: () => queryFirst(SEL.composer).el,
     getRenderedMessages,
     getLoadedMessageCount,

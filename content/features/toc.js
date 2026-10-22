@@ -381,6 +381,40 @@
     setTimeout(() => f.remove(), 1400);
   }
 
+  // ———————————————— 给面板让位 ————————————————
+  // 面板展开时，如果对话区右边的空地放不下面板，就让对话区往左挪（必要时变窄），保证正文不被挡住。
+  // 算法：外层宽 P，对话栏最大宽 W，需要的右侧空地 R。对话栏在 (P - 右边距 p) 里居中，
+  // 右边空地 = (P + p - W) / 2 ≥ R  →  p = max(0, 2R + W - P)
+
+  const PANEL_SPACE = 256 + 16 + 16; // 面板宽 + 离窗口右边 + 和正文的间隔
+  let spaceEl = null;
+  let spacePx = -1;
+
+  function updateSpace() {
+    const hook = A().styleHooks && A().styleHooks.reserveRightSpace;
+    const col = A().getChatColumn && A().getChatColumn();
+    let p = 0;
+    if (hook && col && col.parentElement && host && open && A().getConversationId()) {
+      const P = col.parentElement.clientWidth;
+      const W = parseFloat(getComputedStyle(col).maxWidth) || col.getBoundingClientRect().width;
+      p = Math.max(0, Math.ceil(2 * PANEL_SPACE + W - P));
+    }
+    if (p === spacePx) return;
+    spacePx = p;
+    if (!p) {
+      if (spaceEl) spaceEl.remove();
+      return;
+    }
+    if (!spaceEl) {
+      spaceEl = document.createElement('style');
+      spaceEl.id = 'chat-reader-toc-space';
+    }
+    spaceEl.textContent = hook(p);
+    if (!spaceEl.isConnected) document.head.appendChild(spaceEl);
+  }
+
+  const onResize = CR.utils.debounce(guard(updateSpace), 150);
+
   // ———————————————— 界面 ————————————————
 
   const CSS = `
@@ -504,6 +538,7 @@
 
     ui = { root: wrap, panel, tab, count, bar, where, pct, status, list };
     document.body.appendChild(host);
+    window.addEventListener('resize', onResize);
     applyTheme();
     applyOpen();
   }
@@ -514,6 +549,8 @@
     if (host) host.remove();
     host = null;
     ui = {};
+    window.removeEventListener('resize', onResize);
+    updateSpace();
   }
 
   function ensureAttached() {
@@ -529,6 +566,7 @@
     const inChat = !!A().getConversationId();
     ui.panel.classList.toggle('hidden', !inChat || !open);
     ui.tab.classList.toggle('hidden', !inChat || open);
+    updateSpace();
   }
 
   function setOpen(v) {
@@ -605,6 +643,7 @@
     checkFreshness();
     updateActive();
     updateProgress();
+    updateSpace();
   }
 
   async function enable() {
@@ -620,6 +659,7 @@
     start() {
       if (isEnabled()) enable();
       CR.events.on('settings-change', (e) => {
+        if (e.key === 'typography' && host) CR.featureManager.run('toc', updateSpace); // 对话区宽度可能变了
         if (e.key !== 'toc') return;
         CR.featureManager.run('toc', () => (isEnabled() ? enable() : unmount()));
       });
