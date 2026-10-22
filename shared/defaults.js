@@ -46,5 +46,10 @@ globalThis.CR_SHARED = (() => {
 
   const PRESET_COUNT = 3;
 
-  return { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, PRESET_COUNT };
+  // 目录面板
+  const TOC_DEFAULTS = {
+    enabled: true,
+  };
+
+  return { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, PRESET_COUNT, TOC_DEFAULTS };
 })();

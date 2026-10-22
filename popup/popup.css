@@ -203,6 +203,16 @@ select:focus, input[type="text"]:focus { outline: none; border-color: var(--acce
 .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .btn:disabled { opacity: 0.4; cursor: default; }
 .actions { margin-top: 14px; display: flex; justify-content: flex-end; }
+.actions-left { justify-content: flex-start; margin-top: 8px; }
+.shortcut-row { display: flex; align-items: center; gap: 6px; }
+kbd {
+  font: 12px/1 Consolas, monospace;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--card);
+}
 .toast {
   position: fixed;
   left: 50%;

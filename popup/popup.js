@@ -1,6 +1,6 @@
 // 插件弹窗。弹窗本身不碰网页，需要页面信息时发消息给页面里的内容脚本去问。
 
-const { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, PRESET_COUNT } = globalThis.CR_SHARED;
+const { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, PRESET_COUNT, TOC_DEFAULTS } = globalThis.CR_SHARED;
 const $ = (sel) => document.querySelector(sel);
 
 function el(tag, props = {}, children = []) {
@@ -274,6 +274,24 @@ chrome.storage.sync.get(['typography', 'presets']).then((r) => {
   initTypography();
   renderTypography();
 });
+
+// ======================== 目录 ========================
+
+let toc = { ...TOC_DEFAULTS };
+chrome.storage.sync.get('toc').then((r) => {
+  toc = { ...TOC_DEFAULTS, ...(r.toc || {}) };
+  $('#toc-enabled').checked = toc.enabled;
+});
+$('#toc-enabled').addEventListener('change', (e) => {
+  toc.enabled = e.target.checked;
+  chrome.storage.sync.set({ toc });
+});
+
+chrome.commands.getAll().then((cmds) => {
+  const c = cmds.find((x) => x.name === 'toggle-toc');
+  $('#toc-shortcut').textContent = (c && c.shortcut) || '未设置（可能和别的扩展冲突了）';
+});
+$('#toc-shortcut-edit').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
 
 // ======================== 适配状态 ========================
 

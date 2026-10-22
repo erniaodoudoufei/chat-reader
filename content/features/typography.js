@@ -75,7 +75,7 @@
   CR.featureManager.register('typography', '排版', {
     start() {
       apply();
-      CR.events.on('settings-change', run(apply));
+      CR.events.on('settings-change', (e) => e.key === 'typography' && run(apply)());
       CR.events.on('content-change', run(ensureAttached));
       CR.events.on('conversation-change', run(ensureAttached));
     },

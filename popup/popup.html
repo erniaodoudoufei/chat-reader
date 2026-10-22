@@ -13,6 +13,7 @@
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="typography">排版</button>
+    <button role="tab" data-tab="toc">目录</button>
     <button role="tab" data-tab="status">适配状态</button>
   </nav>
 
@@ -36,6 +37,23 @@
       <div class="actions">
         <button id="ty-reset" class="btn">全部恢复默认</button>
       </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-toc" hidden>
+    <label class="switch-row">
+      <input type="checkbox" id="toc-enabled">
+      <span>启用目录面板</span>
+    </label>
+    <p class="hint">页面右侧的浮动目录，列出你的每一次提问，点击即可跳转。面板右上角的 › 可以收起，收起后右边缘会留一个"目录"小标签。</p>
+
+    <h3>快捷键</h3>
+    <div class="shortcut-row">
+      <span>显示/收起目录：</span>
+      <kbd id="toc-shortcut">未设置</kbd>
+    </div>
+    <div class="actions actions-left">
+      <button id="toc-shortcut-edit" class="btn">修改快捷键</button>
     </div>
   </section>
 
