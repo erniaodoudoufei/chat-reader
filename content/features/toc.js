@@ -28,6 +28,7 @@
   const visibleRows = new Set();
 
   let jumpToken = 0;
+  let jumping = 0; // 正在进行的跳转的编号，0 表示没有在跳转
   let refetchAt = 0;
   let refetchDelay = 3000;
   let scrollRaf = 0;
@@ -77,7 +78,7 @@
       renderList();
       return;
     }
-    if (!questions.length) setStatus('正在读取对话…');
+    if (!questions.length && !jumping) setStatus('正在读取对话…');
     let t = null;
     try {
       t = await A().fetchTranscript(id);
@@ -86,7 +87,7 @@
     }
     if (convId !== id) return; // 读取期间已经切到别的对话了
     transcript = t;
-    setStatus(t ? '' : '无法读取完整对话，只列出屏幕附近的提问');
+    if (!jumping) setStatus(t ? '' : '无法读取完整对话，只列出屏幕附近的提问');
     buildQuestions();
     renderList();
     updateActive();
@@ -95,6 +96,7 @@
 
   // 页面内容变了（新消息、回复生成中、切换分支…）：看看目录数据是否过期
   function checkFreshness() {
+    if (jumping) return; // 跳转途中 Claude 在加载消息，编号会暂时错位，等跳完再说
     if (!transcript) {
       buildQuestions();
       renderList();
@@ -133,12 +135,18 @@
       { root: sc, rootMargin: '-15% 0px -55% 0px', threshold: 0 },
     );
     sc.addEventListener('scroll', onScroll, { passive: true });
+    sc.addEventListener('wheel', cancelJump, { passive: true });
+    sc.addEventListener('touchstart', cancelJump, { passive: true });
     observeRows();
   }
 
   function teardownObserver() {
     if (io) io.disconnect();
-    if (ioRoot) ioRoot.removeEventListener('scroll', onScroll);
+    if (ioRoot) {
+      ioRoot.removeEventListener('scroll', onScroll);
+      ioRoot.removeEventListener('wheel', cancelJump);
+      ioRoot.removeEventListener('touchstart', cancelJump);
+    }
     io = null;
     ioRoot = null;
     observed = new WeakSet();
@@ -234,18 +242,46 @@
     });
   }
 
-  async function smoothTo(sc, el) {
-    const top = sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - SCROLL_OFFSET;
+  // 平滑滚动到某个位置。距离很远时先瞬间跳到附近再平滑滚动：
+  // 长距离平滑滚动途中 Claude 会重新计算消息高度，终点会跑偏
+  async function scrollSmooth(sc, top) {
+    const far = sc.clientHeight * 2;
+    if (Math.abs(top - sc.scrollTop) > far) {
+      sc.scrollTo({ top: top > sc.scrollTop ? top - far / 2 : top + far / 2, behavior: 'instant' });
+      await nextFrames();
+    }
     if (Math.abs(top - sc.scrollTop) < 2) return;
     sc.scrollTo({ top, behavior: 'smooth' });
     await waitScrollEnd(sc, 1500);
   }
 
-  async function jumpTo(tIdx, { flash = true } = {}) {
+  async function smoothTo(sc, el) {
+    await scrollSmooth(sc, sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - SCROLL_OFFSET);
+  }
+
+  async function jumpTo(tIdx, opts) {
     const token = ++jumpToken;
+    jumping = token;
+    try {
+      await doJump(token, tIdx, opts);
+    } finally {
+      if (jumping === token) jumping = 0;
+    }
+  }
+
+  // 跳转途中用户自己动了滚轮/键盘，就取消跳转，不跟用户抢
+  function cancelJump() {
+    if (!jumping) return;
+    jumpToken++;
+    jumping = 0;
+    setStatus('');
+  }
+
+  async function doJump(token, tIdx, { flash = true } = {}) {
     const sc = A().getScrollContainer();
     if (!sc) return;
     let batches = 0;
+    let mismatches = 0;
     for (let step = 0; step < 300; step++) {
       if (token !== jumpToken) return; // 又点了别的，放弃这次
       const rows = A().getRenderedMessages();
@@ -253,7 +289,18 @@
         await sleep(150);
         continue;
       }
-      const target = rows.find((m) => tIndexOf(m) === tIdx);
+      // 编号对上还要核对内容：Claude 加载新一批消息的瞬间，编号会短暂错位
+      const target = rows.find((m) => tIndexOf(m) === tIdx && (!transcript || A().isSameMessage(m, transcript.messages[tIdx])));
+      if (!target && rows.some((m) => tIndexOf(m) === tIdx)) {
+        if (++mismatches > 10) {
+          // 一直对不上：目录数据过期了，重新读取
+          setStatus('目录和页面对不上，正在刷新…');
+          loadTranscript();
+          return;
+        }
+        await sleep(200);
+        continue;
+      }
       if (target) {
         setStatus('');
         await smoothTo(sc, target.el);
@@ -280,7 +327,7 @@
         if (sc.scrollTop <= 2) {
           // 已经到顶，等 Claude 加载更早的一批消息
           batches++;
-          setStatus(`正在加载更早的消息…（第 ${batches} 批）`);
+          setStatus(`正在加载更早的消息…（第 ${batches} 批，滚动鼠标可取消）`);
           const before = A().getLoadedMessageCount();
           const ok = await waitFor(() => A().getLoadedMessageCount() !== before, 5000);
           if (!ok) {
@@ -307,14 +354,20 @@
   async function goTop() {
     await jumpTo(0, { flash: false });
     const sc = A().getScrollContainer();
-    if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' });
+    if (sc && ui.status && !ui.status.textContent) await scrollSmooth(sc, 0);
   }
 
-  function goBottom() {
-    jumpToken++;
+  // 底部的消息高度可能还没算准，滚一次不一定到底，所以到达后检查，没到底就再补几次
+  async function goBottom() {
+    const token = ++jumpToken;
     setStatus('');
     const sc = A().getScrollContainer();
-    if (sc) sc.scrollTo({ top: sc.scrollHeight, behavior: 'smooth' });
+    if (!sc) return;
+    await scrollSmooth(sc, sc.scrollHeight - sc.clientHeight);
+    for (let i = 0; i < 10 && token === jumpToken && !atBottom(); i++) {
+      sc.scrollTo({ top: sc.scrollHeight, behavior: 'instant' });
+      await nextFrames();
+    }
   }
 
   // 到达后在目标位置上盖一个半透明框闪两下（叠加层，不碰原来的元素）

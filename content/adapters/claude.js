@@ -142,6 +142,13 @@
   // 比较文字是否是同一条消息（只看开头，忽略空白）
   const sameText = (a, b) => a.replace(/\s+/g, '').slice(0, 20) === b.replace(/\s+/g, '').slice(0, 20);
 
+  // 页面上的某条消息（getRenderedMessages 的一项）是不是接口数据里的那一条
+  function isSameMessage(rendered, item) {
+    if (!rendered || !item || rendered.role !== item.role) return false;
+    // 提问比较文字开头；回复可能还在生成或含工具调用，只比较角色
+    return item.role !== 'user' || sameText(rendered.bodyEl.innerText, item.text);
+  }
+
   // 检查页面上显示的提问和接口数据能不能对上（对不上说明数据过期了，比如刚切换了分支，需要重新读取）
   function checkAlignment(transcript) {
     const n = transcript.messages.length;
@@ -318,6 +325,7 @@
     getLoadedMessageCount,
     toTranscriptIndex,
     checkAlignment,
+    isSameMessage,
     fetchTranscript,
     styleTargets: STYLE_TARGETS,
     styleHooks: STYLE_HOOKS,
