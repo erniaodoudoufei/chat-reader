@@ -317,6 +317,19 @@ chrome.commands.getAll().then((cmds) => {
 });
 $('#toc-shortcut-edit').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
 
+// ======================== 标注 ========================
+
+let annotate = { ...globalThis.CR_SHARED.ANNOTATE_DEFAULTS };
+chrome.storage.sync.get('annotate').then((r) => {
+  annotate = { ...annotate, ...(r.annotate || {}) };
+  $('#an-enabled').checked = annotate.enabled;
+});
+$('#an-enabled').addEventListener('change', (e) => {
+  annotate.enabled = e.target.checked;
+  chrome.storage.sync.set({ annotate });
+});
+$('#an-open-notes').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('notes/notes.html') }));
+
 // ======================== 适配状态 ========================
 
 const ICONS = { ok: '✓', warn: '⚠', fail: '✗', info: '·' };

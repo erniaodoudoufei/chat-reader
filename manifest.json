@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Chat Reader",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "把 Claude 网页版的聊天页面变成可以批注的教材：排版、目录、标注、查词。",
-  "permissions": ["storage"],
+  "permissions": ["storage", "unlimitedStorage"],
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -32,6 +32,7 @@
       "matches": ["https://claude.ai/*"],
       "js": [
         "shared/defaults.js",
+        "shared/annotation-store.js",
         "content/core/namespace.js",
         "content/core/utils.js",
         "content/core/page-watcher.js",
@@ -39,10 +40,12 @@
         "content/core/features.js",
         "content/core/transcript.js",
         "content/core/panel.js",
+        "content/core/anchoring.js",
         "content/adapters/claude.js",
         "content/adapters/index.js",
         "content/features/typography.js",
         "content/features/toc.js",
+        "content/features/annotate.js",
         "content/main.js"
       ],
       "run_at": "document_idle"

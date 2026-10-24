@@ -58,6 +58,20 @@
     uiChrome: css('uiChrome'),
   };
 
+  // 标注时不算正文的部分：公式的 MathML 副本（屏幕上看不见）、Claude 标了"查找时忽略"的状态行、
+  // 屏幕阅读器专用文字、按钮和图标、沉浸式翻译等插件插入的译文
+  const ANNOTATION_IGNORE = [
+    '.katex-mathml',
+    '[data-find-omitted]',
+    '.sr-only',
+    'button',
+    '[role="button"]',
+    '[data-cds="Icon"]',
+    '[data-testid="message-actions"]',
+    '[data-testid="user-message-actions"]',
+    '[class*="immersive-translate"]',
+  ].join(', ');
+
   // 只有 Claude 才有的排版"开关"（CSS 变量）。用它们比硬改元素更稳：标题、列表等会按 Claude 自己的比例跟着变
   const STYLE_HOOKS = {
     // 对话区宽度：消息列表和输入框共用 --transcript-width
@@ -138,6 +152,18 @@
       })
       .filter((m) => m.role && !Number.isNaN(m.index))
       .sort((a, b) => a.index - b.index);
+  }
+
+  // 某个页面节点属于哪条消息（不在任何消息里返回 null）
+  function findMessageForNode(node) {
+    const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
+    if (!el) return null;
+    return getRenderedMessages().find((m) => m.bodyEl.contains(el)) || null;
+  }
+
+  // 回复是否还在生成中（生成中的文字还会变，标注先不判定失效）
+  function isStreaming(m) {
+    return !!(m.el.querySelector('[data-is-streaming="true"]') || m.el.closest('[data-is-streaming="true"]'));
   }
 
   // 页面已加载的消息数（页面上"第 N 条消息，共 M 条"里的 M）。长对话里它小于整段对话的消息数
@@ -335,6 +361,12 @@
     getScrollContainer: () => findScrollContainer().el,
     getTranscriptRoot: () => queryFirst(SEL.transcript).el,
     getChatColumn: () => queryFirst(SEL.chatColumn).el,
+    getConversationUrl: (id = getConversationId()) => (id ? `${location.origin}/chat/${id}` : null),
+    findMessageForNode,
+    isStreaming,
+    // 标注：在消息的哪个元素里取文字、哪些部分跳过
+    getAnnotationRoot: (m) => m.bodyEl,
+    annotationIgnore: ANNOTATION_IGNORE,
     getComposer: () => queryFirst(SEL.composer).el,
     getRenderedMessages,
     getLoadedMessageCount,

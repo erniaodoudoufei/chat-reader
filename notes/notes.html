@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>我的笔记 - Chat Reader</title>
+  <link rel="icon" href="../icons/icon32.png">
+  <link rel="stylesheet" href="notes.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title-row">
+      <h1>我的笔记</h1>
+      <span id="summary" class="muted"></span>
+    </div>
+    <div class="tools">
+      <input id="search" type="search" placeholder="搜索原文或批注…">
+      <button id="copy-all" class="btn">复制全部为 Markdown</button>
+      <button id="export" class="btn">导出备份</button>
+      <button id="import" class="btn">导入备份</button>
+      <input id="import-file" type="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <main id="groups"></main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="../shared/annotation-store.js"></script>
+  <script src="notes.js"></script>
+</body>
+</html>

@@ -69,5 +69,10 @@ globalThis.CR_SHARED = (() => {
     enabled: true,
   };
 
-  return { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, BG_TINTS, PRESET_COUNT, TOC_DEFAULTS };
+  // 标注
+  const ANNOTATE_DEFAULTS = {
+    enabled: true,
+  };
+
+  return { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, BG_TINTS, PRESET_COUNT, TOC_DEFAULTS, ANNOTATE_DEFAULTS };
 })();

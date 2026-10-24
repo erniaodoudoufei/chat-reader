@@ -40,6 +40,7 @@
       return Object.values(registry).map((f) => {
         if (f.state === 'error') return { label: `功能：${f.label}`, status: 'fail', detail: `出错已停用：${f.error}` };
         const on = f.impl.isEnabled ? f.impl.isEnabled() : true;
+        if (f.state !== 'running') return { label: `功能：${f.label}`, status: 'warn', detail: '还没有启动' };
         return { label: `功能：${f.label}`, status: on ? 'ok' : 'info', detail: on ? '运行中' : '已关闭' };
       });
     },
