@@ -26,7 +26,8 @@
     // 每一行消息（提问或回复）
     row: ['[data-testid="transcript-row"]', '[role="feed"] [role="article"]'],
     // 行内的提问 / 回复主体
-    userMessage: ['[data-testid="user-message"]', '[data-cds="UserMessage"]'],
+    // 注意备用选择器只能圈住提问文字本身：[data-cds="UserMessage"] 包含了下面那排按钮，排版时会误伤图标
+    userMessage: ['[data-testid="user-message"]', '.cds-user-message-body'],
     assistantMessage: ['[data-testid="assistant-message"]', '[data-cds="AssistantMessage"]'],
     // 带"第 N 条消息，共 M 条"信息的元素
     article: ['[role="article"][aria-setsize]'],
@@ -40,6 +41,8 @@
     katex: ['.katex'],
     // 代码块
     codeBlock: ['pre code', 'pre'],
+    // 界面上的图标和按钮：图标是用 Claude 自己的图标字体（Anthropicons）画的，换字体会变成方块，排版时必须跳过
+    uiChrome: ['[data-cds="Icon"]', 'button', '[role="button"]'],
   };
 
   // 给排版功能用的 CSS 选择器（多个备用用逗号连起来，哪个匹配上都生效）
@@ -52,6 +55,7 @@
     prose: css('prose'),
     katex: css('katex'),
     codeBlock: css('codeBlock'),
+    uiChrome: css('uiChrome'),
   };
 
   // 只有 Claude 才有的排版"开关"（CSS 变量）。用它们比硬改元素更稳：标题、列表等会按 Claude 自己的比例跟着变

@@ -30,14 +30,16 @@
     const col = `:is(${A.chatColumn})`;
     const scope = `${col} :is(${A.prose}, ${A.markdown}, ${A.userMessage})`;
     const text = `${col} :is(${A.prose}, ${A.userMessage})`;
-    // 代码和公式不跟正文字体走
-    const notCodeOrMath = `:not(code, code *, pre, pre *, kbd, :is(${A.katex}), :is(${A.katex}) *)`;
+    // 代码、公式、界面图标和按钮不跟正文字体走（图标是图标字体画的，换了字体会变成方块）
+    const skip = [A.katex, A.uiChrome].filter(Boolean).map((s) => `:is(${s}), :is(${s}) *`).join(', ');
+    const notCodeOrMath = `:not(code, code *, pre, pre *, kbd, ${skip})`;
 
     if (t.bodyFont) {
       rules.push(`${scope}, ${scope} *${notCodeOrMath} { font-family: ${fontList(t.bodyFont)}, system-ui, sans-serif !important; }`);
     }
     if (t.codeFont) {
-      rules.push(`${scope} :is(code, pre, kbd), ${scope} :is(code, pre) * { font-family: ${fontList(t.codeFont)}, ui-monospace, Consolas, monospace !important; }`);
+      const notChrome = A.uiChrome ? `:not(:is(${A.uiChrome}), :is(${A.uiChrome}) *)` : '';
+      rules.push(`${scope} :is(code, pre, kbd)${notChrome}, ${scope} :is(code, pre) *${notChrome} { font-family: ${fontList(t.codeFont)}, ui-monospace, Consolas, monospace !important; }`);
     }
     if (t.fontSize != null) {
       rules.push(`${text} { font-size: ${t.fontSize}px !important; }`);
