@@ -37,6 +37,8 @@
         "content/core/page-watcher.js",
         "content/core/settings.js",
         "content/core/features.js",
+        "content/core/transcript.js",
+        "content/core/panel.js",
         "content/adapters/claude.js",
         "content/adapters/index.js",
         "content/features/typography.js",
