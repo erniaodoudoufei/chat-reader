@@ -12,6 +12,24 @@ globalThis.CR_SHARED = (() => {
     paragraphSpacing: null,
     contentWidth: null,
     katexScale: null,
+    bgLight: '', // 浅色模式背景色调，'' = Claude 默认
+    bgDark: '', // 深色模式背景色调
+  };
+
+  // 背景色调：page 正文区背景，side 侧栏和次要区域，comp 输入框。明暗层次和 Claude 原配色保持一致
+  const BG_TINTS = {
+    light: [
+      { id: '', label: 'Claude 默认', page: '#ffffff', side: '#fafafa', comp: '#ffffff' },
+      { id: 'paper', label: '米黄', page: '#f8f3e6', side: '#f1ebdc', comp: '#fdfaf3' },
+      { id: 'green', label: '豆沙绿', page: '#e9f1e2', side: '#e1e9d9', comp: '#f5f9f1' },
+      { id: 'gray', label: '浅灰', page: '#f1f1ed', side: '#e9e9e4', comp: '#fafaf8' },
+    ],
+    dark: [
+      { id: '', label: 'Claude 默认', page: '#191919', side: '#1f1f1f', comp: '#303030' },
+      { id: 'warm', label: '暖黑', page: '#1c1a17', side: '#23201b', comp: '#35312b' },
+      { id: 'green', label: '墨绿', page: '#172019', side: '#1c261f', comp: '#2c372f' },
+      { id: 'blue', label: '深蓝灰', page: '#181c22', side: '#1e232a', comp: '#2e343e' },
+    ],
   };
 
   // 滑块：claude 表示 Claude 默认大约是多少（未调整时滑块停在这里）
@@ -51,5 +69,5 @@ globalThis.CR_SHARED = (() => {
     enabled: true,
   };
 
-  return { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, PRESET_COUNT, TOC_DEFAULTS };
+  return { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, BG_TINTS, PRESET_COUNT, TOC_DEFAULTS };
 })();

@@ -1,4 +1,4 @@
-// 排版功能：根据设置生成一段 CSS，放进页面 <head> 里的一个 <style>。
+// 排版功能（含背景色调）：根据设置生成一段 CSS，放进页面 <head> 里的一个 <style>。
 // 只"给页面换衣服"，不改动 Claude 的任何页面元素。
 (() => {
   const CR = window.CR;
@@ -15,8 +15,17 @@
       .join(', ');
   }
 
-  function buildCss(t, A, hooks) {
+  // 背景色调跟随 Claude 当前的深色/浅色模式
+  function currentTint(t, theme) {
+    const id = theme === 'dark' ? t.bgDark : t.bgLight;
+    if (!id) return null;
+    return globalThis.CR_SHARED.BG_TINTS[theme === 'dark' ? 'dark' : 'light'].find((x) => x.id === id) || null;
+  }
+
+  function buildCss(t, A, hooks, theme) {
     const rules = [];
+    const tint = currentTint(t, theme);
+    if (tint && hooks.pageTint) rules.push(hooks.pageTint(tint));
     // 作用范围：对话栏里的 AI 回复 + 我的提问（限定在对话栏里，避免影响 Claude 其他页面上的同类元素）
     const col = `:is(${A.chatColumn})`;
     const scope = `${col} :is(${A.prose}, ${A.markdown}, ${A.userMessage})`;
@@ -57,7 +66,7 @@
       styleEl = document.createElement('style');
       styleEl.id = STYLE_ID;
     }
-    styleEl.textContent = buildCss(t, CR.adapter.styleTargets, CR.adapter.styleHooks || {});
+    styleEl.textContent = buildCss(t, CR.adapter.styleTargets, CR.adapter.styleHooks || {}, CR.adapter.getTheme());
     ensureAttached();
   }
 
@@ -77,6 +86,7 @@
       apply();
       CR.events.on('settings-change', (e) => e.key === 'typography' && run(apply)());
       CR.events.on('content-change', run(ensureAttached));
+      CR.events.on('theme-change', run(apply));
       CR.events.on('conversation-change', run(ensureAttached));
     },
     stop: remove,

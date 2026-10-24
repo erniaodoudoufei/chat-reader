@@ -1,6 +1,6 @@
 // 插件弹窗。弹窗本身不碰网页，需要页面信息时发消息给页面里的内容脚本去问。
 
-const { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, PRESET_COUNT, TOC_DEFAULTS } = globalThis.CR_SHARED;
+const { TYPOGRAPHY_DEFAULTS, SLIDERS, BODY_FONTS, CODE_FONTS, BG_TINTS, PRESET_COUNT, TOC_DEFAULTS } = globalThis.CR_SHARED;
 const $ = (sel) => document.querySelector(sel);
 
 function el(tag, props = {}, children = []) {
@@ -190,6 +190,28 @@ function buildSlider(spec) {
   return row;
 }
 
+// —— 背景色 ——
+function buildBgRow(key, label, tints) {
+  const buttons = tints.map((t) => {
+    const chip = el('span', { class: 'chip' });
+    chip.style.background = t.page;
+    chip.style.setProperty('--side', t.side);
+    const b = el('button', { class: 'swatch', title: t.label }, [chip, el('span', { text: t.label })]);
+    b.addEventListener('click', () => {
+      ty[key] = t.id;
+      syncFromState();
+      changed({ immediate: true });
+    });
+    return b;
+  });
+  function syncFromState() {
+    buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(tints[i].id === (ty[key] || ''))));
+  }
+  const row = el('div', { class: 'bg-row' }, [el('span', { class: 'field-label', text: label }), el('div', { class: 'swatches' }, buttons)]);
+  row.sync = syncFromState;
+  return row;
+}
+
 // —— 预设 ——
 function presetName(i) {
   return (presets[i] && presets[i].name) || `预设 ${i + 1}`;
@@ -251,9 +273,11 @@ function initTypography() {
   $('#ty-fonts').append(...fonts);
   const sliders = SLIDERS.map(buildSlider);
   $('#ty-sliders').append(...sliders);
+  const bgs = [buildBgRow('bgLight', '浅色模式', BG_TINTS.light), buildBgRow('bgDark', '深色模式', BG_TINTS.dark)];
+  $('#ty-bg').append(...bgs);
   const rows = Array.from({ length: PRESET_COUNT }, (_, i) => buildPresetRow(i));
   $('#ty-presets').append(...rows);
-  syncers.push(...[...fonts, ...sliders, ...rows].map((x) => x.sync));
+  syncers.push(...[...fonts, ...sliders, ...bgs, ...rows].map((x) => x.sync));
 
   $('#ty-enabled').addEventListener('change', (e) => {
     ty.enabled = e.target.checked;

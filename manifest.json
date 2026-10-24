@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chat Reader",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "把 Claude 网页版的聊天页面变成可以批注的教材：排版、目录、标注、查词。",
   "permissions": ["storage"],
   "icons": {

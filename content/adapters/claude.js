@@ -60,6 +60,13 @@
     contentWidth: (px) => `${css('chatColumn')} { --transcript-width: ${px}px !important; }`,
     // 段落间距：Claude 用 --_prose-flow-base 控制段落、列表、标题之间的距离（标题前后是它的倍数）
     paragraphSpacing: (em) => `${css('prose')} { --_prose-flow-base: ${em}em !important; }`,
+    // 背景色调：Claude 的背景由 --cds-surface-* 变量决定（surface-1 正文区，surface-2/3 次要区域），
+    // 这些变量在很多 .cds-root 元素上会被重新定义，所以要连同 .cds-root 一起覆盖。
+    // 侧栏用 --df-(web-)sidebar-bg；输入框是 .bg-surface-3（它附近把 surface-3 定义成了更亮的颜色），单独设置
+    pageTint: (t) =>
+      `:root, :root :is(.cds-root, .dframe-root, .dframe-sidebar) { --cds-surface-1: ${t.page} !important; --cds-surface-2: ${t.side} !important; ` +
+      `--cds-surface-3: ${t.side} !important; --df-sidebar-bg: ${t.side} !important; --df-web-sidebar-bg: ${t.side} !important; }\n` +
+      `:is(${css('composer')}) .bg-surface-3 { background-color: ${t.comp} !important; }`,
     // 在对话区右边留出空位（给目录面板）：加在对话栏的外层上，对话栏会在剩下的空间里居中
     reserveRightSpace: (px) =>
       `div:has(> :is(${css('chatColumn')})) { padding-right: ${px}px !important; transition: padding-right .2s ease; }`,
