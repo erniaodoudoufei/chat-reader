@@ -439,14 +439,15 @@
     if (ui.wrap) ui.wrap.classList.toggle('dark', A().getTheme() === 'dark');
   }
 
-  // 把浮层放在某个矩形的上方（放不下就放下方），左右不超出窗口
+  // 把浮层放在某个矩形的下方（下方放不下才放上方），左右不超出窗口。
+  // 放下方是因为 Claude 自己的"回复"按钮和其他插件的划词按钮通常出现在选区上方，避免互相遮挡
   function place(box, rect) {
     box.classList.remove('hidden');
     const w = box.offsetWidth;
     const hgt = box.offsetHeight;
-    let top = rect.top - hgt - 8;
-    if (top < 8) top = rect.bottom + 8;
-    top = Math.min(top, innerHeight - hgt - 8);
+    let top = rect.bottom + 10;
+    if (top + hgt > innerHeight - 8) top = rect.top - hgt - 10;
+    top = Math.max(8, Math.min(top, innerHeight - hgt - 8));
     const left = Math.max(8, Math.min(rect.left + rect.width / 2 - w / 2, innerWidth - w - 8));
     box.style.top = top + 'px';
     box.style.left = left + 'px';
