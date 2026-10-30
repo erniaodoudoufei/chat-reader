@@ -16,6 +16,8 @@
   let ui = {};
   let questions = []; // [{ q: 第几问(从1开始), tIndex: 在整段对话里的序号, text }]
   let activeQ = -1;
+  let annotations = []; // 标注功能告诉我们的：[{ tIndex, color }]
+  const SWATCH = Object.fromEntries(globalThis.CR_ANN.COLORS.map((c) => [c.id, c.swatch]));
 
   let io = null;
   let ioRoot = null;
@@ -61,6 +63,24 @@
     let found = -1;
     for (let i = 0; i < questions.length && questions[i].tIndex <= tIdx; i++) found = i;
     return found;
+  }
+
+  // 每一问（含它后面的回复）里有几条标注、第一条是什么颜色：questions 下标 → { count, color }
+  function annotationMarks() {
+    const marks = new Map();
+    for (const a of annotations) {
+      const q = questionOf(a.tIndex);
+      if (q < 0) continue;
+      const m = marks.get(q);
+      if (m) m.count++;
+      else marks.set(q, { count: 1, color: a.color });
+    }
+    return marks;
+  }
+
+  function onAnnotationsChange(list) {
+    annotations = list || [];
+    renderList();
   }
 
   function onTranscriptChange() {
@@ -357,7 +377,8 @@
     }
     .toc-item:hover { background: var(--hover); }
     .toc-item .n { color: var(--muted); min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; flex: none; }
-    .toc-item .t { overflow: hidden; text-overflow: ellipsis; }
+    .toc-item .t { overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+    .toc-item .mark { width: 7px; height: 7px; border-radius: 50%; flex: none; align-self: center; }
     .toc-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
     .toc-item.active .n { color: var(--accent); }
     .toc-status { color: var(--muted); font-size: 12px; padding: 4px 14px; }
@@ -424,12 +445,21 @@
       return;
     }
     const frag = document.createDocumentFragment();
+    const marks = annotationMarks();
     questions.forEach((q, i) => {
       const li = h('li');
       const btn = h('button', 'toc-item');
       btn.dataset.i = i;
       btn.title = (q.text || '').replace(/\s+/g, ' ').trim().slice(0, 200);
       btn.append(h('span', 'n', String(q.q)), h('span', 't', summary(q.text)));
+      const mark = marks.get(i);
+      if (mark) {
+        const dot = h('span', 'mark');
+        dot.style.background = SWATCH[mark.color] || 'var(--accent)';
+        dot.title = `这一问里有 ${mark.count} 条标注`;
+        btn.append(dot);
+        btn.title += `\n（${mark.count} 条标注）`;
+      }
       li.append(btn);
       frag.append(li);
     });
@@ -506,6 +536,7 @@
       CR.events.on('conversation-change', guard(() => active && onConversationChange()));
       CR.events.on('content-change', guard(() => active && onContentChange()));
       CR.events.on('transcript-change', guard(() => active && onTranscriptChange()));
+      CR.events.on('annotations-change', guard((list) => (active ? onAnnotationsChange(list) : (annotations = list || []))));
     },
     stop: () => setActiveState(false),
     isEnabled,

@@ -62,12 +62,13 @@ globalThis.CR_ANN = (() => {
 
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+  // swatch：界面上表示这个颜色的小圆点用的色值
   const COLORS = [
-    { id: 'yellow', label: '黄色' },
-    { id: 'green', label: '绿色' },
-    { id: 'blue', label: '蓝色' },
-    { id: 'pink', label: '粉色' },
-    { id: 'purple', label: '紫色' },
+    { id: 'yellow', label: '黄色', swatch: '#ffd43b' },
+    { id: 'green', label: '绿色', swatch: '#69db7c' },
+    { id: 'blue', label: '蓝色', swatch: '#74c0fc' },
+    { id: 'pink', label: '粉色', swatch: '#f783ac' },
+    { id: 'purple', label: '紫色', swatch: '#b197fc' },
   ];
 
   return { key, PREFIX, getGroup, saveGroup, listGroups, importGroups, newId, COLORS };

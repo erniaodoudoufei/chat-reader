@@ -180,6 +180,19 @@
     setHighlights(byName);
     if (statusChanged) persistSoon();
     renderTab();
+    announce();
+  }
+
+  // 告诉其他功能（目录）：本对话有哪些有效标注、各在哪条消息上。只在内容变了时才发事件
+  let lastAnnounced = '';
+  function announce() {
+    const list = (group ? group.items : [])
+      .filter((a) => statusById.get(a.id) !== 'orphan')
+      .map((a) => ({ tIndex: indexInConversation(a), color: a.color }));
+    const key = JSON.stringify(list);
+    if (key === lastAnnounced) return;
+    lastAnnounced = key;
+    CR.events.emit('annotations-change', list);
   }
 
   const paintSoon = CR.utils.debounce(guard(paint), 120);
@@ -333,7 +346,7 @@
     .done:hover { border-color: var(--accent); color: var(--accent); }
   `;
 
-  const SWATCH = { yellow: '#ffd43b', green: '#69db7c', blue: '#74c0fc', pink: '#f783ac', purple: '#b197fc' };
+  const SWATCH = Object.fromEntries(S.COLORS.map((c) => [c.id, c.swatch]));
   const COLOR_LABEL = Object.fromEntries(S.COLORS.map((c) => [c.id, c.label]));
 
   function h(tag, cls, text) {
@@ -729,6 +742,7 @@
       if (hlStyleEl) hlStyleEl.remove();
       unmountUi();
       group = null;
+      announce();
     }
     CR.panel.setEnabled('annotate', on);
   }
