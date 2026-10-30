@@ -1,4 +1,4 @@
-// "我的笔记"页：所有对话的标注汇总，可搜索、复制为 Markdown、导出/导入备份。
+// "我的笔记"页：所有对话的标注汇总，可搜索、编辑批注、删除、复制为 Markdown、导出/导入备份，并提醒定期备份。
 const S = globalThis.CR_ANN;
 const $ = (sel) => document.querySelector(sel);
 const COLOR_LABEL = Object.fromEntries(S.COLORS.map((c) => [c.id, c.label]));
@@ -64,6 +64,64 @@ function groupMarkdown(g, items) {
   return lines.join('\n');
 }
 
+// 危险操作点两下才执行：第一下按钮变成"确定删除？"，3 秒内再点一下才真删（不用弹窗）
+function confirmButton(btn, confirmLabel, action) {
+  const label = btn.textContent;
+  let timer = null;
+  btn.addEventListener('click', async () => {
+    if (!btn.classList.contains('confirm')) {
+      btn.classList.add('confirm');
+      btn.textContent = confirmLabel;
+      timer = setTimeout(() => {
+        btn.classList.remove('confirm');
+        btn.textContent = label;
+      }, 3000);
+      return;
+    }
+    clearTimeout(timer);
+    await action();
+  });
+}
+
+// 在原处把批注变成输入框
+function startEdit(body, g, a) {
+  if (body.querySelector('.edit-box')) return;
+  const box = h('div', 'edit-box');
+  const ta = h('textarea');
+  ta.value = a.note || '';
+  ta.placeholder = '写点批注…（Ctrl+Enter 保存，Esc 取消）';
+  const row = h('div', 'row');
+  const cancel = h('button', 'btn btn-small', '取消');
+  const save = h('button', 'btn btn-small', '保存');
+  row.append(cancel, save);
+  box.append(ta, row);
+  const noteEl = body.querySelector('.note');
+  const actions = body.querySelector('.actions');
+  if (noteEl) noteEl.hidden = true;
+  actions.hidden = true;
+  body.insertBefore(box, actions);
+  ta.focus();
+
+  const close = () => {
+    box.remove();
+    if (noteEl) noteEl.hidden = false;
+    actions.hidden = false;
+  };
+  const doSave = async () => {
+    const note = ta.value.trim();
+    if (note === (a.note || '')) return close();
+    await S.updateItem(g.convId, a.id, { note });
+    toast(note ? '批注已保存' : '批注已清空');
+    // 存储变化会触发整页刷新，这里不用手动关闭
+  };
+  cancel.addEventListener('click', close);
+  save.addEventListener('click', doSave);
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) doSave();
+    if (e.key === 'Escape') close();
+  });
+}
+
 async function copy(text, what) {
   try {
     await navigator.clipboard.writeText(text);
@@ -106,7 +164,18 @@ function render() {
     const count = h('span', 'muted', `${items.length} 条`);
     const copyBtn = h('button', 'btn btn-small', '复制本对话');
     copyBtn.addEventListener('click', () => copy(groupMarkdown(g, items), `「${g.title || '未命名对话'}」的 ${items.length} 条标注`));
-    head.append(title, count, copyBtn);
+    head.append(title, count);
+    const orphans = g.items.filter((a) => a.status === 'orphan');
+    if (orphans.length) {
+      const clean = h('button', 'btn btn-small', `清理 ${orphans.length} 条失效标注`);
+      clean.title = '删除这个对话里原文已经找不到的标注';
+      confirmButton(clean, `确定删除 ${orphans.length} 条？`, async () => {
+        const n = await S.removeItems(g.convId, orphans.map((a) => a.id));
+        toast(`已删除 ${n} 条失效标注`);
+      });
+      head.append(clean);
+    }
+    head.append(copyBtn);
 
     const list = h('ul', 'items');
     for (const a of items) {
@@ -128,6 +197,16 @@ function render() {
       const meta = h('div', 'meta', `${COLOR_LABEL[a.color] || ''}${a.style === 'wavy' ? '波浪线' : '高亮'} · ${a.role === 'user' ? '我的提问' : 'Claude 回复'} · ${fmtTime(a.createdAt)}`);
       if (a.status === 'orphan') meta.append(h('span', 'badge', '失效：原文找不到了'));
       body.append(meta);
+      const actions = h('div', 'actions');
+      const edit = h('button', 'link-btn', a.note ? '编辑批注' : '添加批注');
+      edit.addEventListener('click', () => startEdit(body, g, a));
+      const del = h('button', 'link-btn danger', '删除');
+      confirmButton(del, '确定删除？', async () => {
+        await S.removeItems(g.convId, [a.id]);
+        toast('已删除这条标注');
+      });
+      actions.append(edit, del);
+      body.append(actions);
       li.append(bar, body);
       list.append(li);
     }
@@ -137,10 +216,22 @@ function render() {
   if (!shown) main.append(h('p', 'empty', `没有找到包含「${query}」的标注`));
 }
 
+// —— 备份提醒 ——
+async function renderBackupTip() {
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  const st = S.backupStatus(await S.getLastBackup(), total);
+  const tip = $('#backup-tip');
+  tip.hidden = !st;
+  if (!st) return;
+  tip.classList.toggle('warn', st.warn);
+  $('#backup-text').textContent = st.text;
+}
+
 async function load() {
   groups = await S.listGroups();
   for (const g of groups) g.items.sort((a, b) => (a.messageIndex ?? 0) - (b.messageIndex ?? 0) || (a.offset ?? 0) - (b.offset ?? 0));
   render();
+  renderBackupTip();
 }
 
 // —— 操作 ——
@@ -156,6 +247,8 @@ $('#copy-all').addEventListener('click', () => {
   copy(parts.map(([g, items]) => groupMarkdown(g, items)).join('\n'), query ? `搜索结果里的 ${n} 条标注` : `全部 ${n} 条标注`);
 });
 
+$('#backup-now').addEventListener('click', () => $('#export').click());
+
 $('#export').addEventListener('click', async () => {
   const all = await S.listGroups();
   const data = { app: 'chat-reader', version: chrome.runtime.getManifest().version, exportedAt: new Date().toISOString(), groups: all };
@@ -166,6 +259,8 @@ $('#export').addEventListener('click', async () => {
   a.download = `chat-reader-标注备份-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  await S.markBackedUp();
+  renderBackupTip();
   toast(`已导出 ${all.reduce((n, g) => n + g.items.length, 0)} 条标注`);
 });
 

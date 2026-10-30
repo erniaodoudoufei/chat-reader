@@ -105,6 +105,55 @@ main { padding: 16px max(16px, calc(50% - 440px)) 60px; }
 .meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
 .badge { display: inline-block; padding: 0 6px; border-radius: 4px; background: rgba(229, 72, 77, 0.12); color: #e5484d; font-size: 12px; margin-left: 6px; }
 .empty { text-align: center; color: var(--muted); padding: 60px 0; }
+
+/* 备份提醒 */
+.backup-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.backup-tip[hidden] { display: none; }
+.backup-tip.warn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(230, 160, 40, 0.14);
+  color: var(--fg);
+}
+.backup-tip:not(.warn) #backup-now { display: none; }
+
+/* 每条标注的操作按钮：鼠标移上去才明显 */
+.actions { display: flex; gap: 4px; margin-top: 6px; opacity: 0.55; transition: opacity 0.15s; }
+.item:hover .actions, .actions:focus-within { opacity: 1; }
+.link-btn {
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.link-btn:hover { background: rgba(127, 127, 127, 0.12); color: var(--fg); }
+.link-btn.danger:hover, .link-btn.confirm { color: #e5484d; background: rgba(229, 72, 77, 0.1); }
+.edit-box textarea {
+  width: 100%;
+  min-height: 80px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  resize: vertical;
+}
+.edit-box textarea:focus { outline: none; border-color: var(--accent); }
+.edit-box .row { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
 .hit { background: rgba(255, 146, 43, 0.35); color: inherit; border-radius: 2px; }
 
 .toast {

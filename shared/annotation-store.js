@@ -60,6 +60,45 @@ globalThis.CR_ANN = (() => {
     return { added, updated };
   }
 
+  // 改一条标注（比如在"我的笔记"页里改批注）
+  async function updateItem(convId, id, patch) {
+    const g = await getGroup(convId);
+    const a = g && g.items.find((x) => x.id === id);
+    if (!a) return false;
+    Object.assign(a, patch, { updatedAt: Date.now() });
+    await saveGroup(g);
+    return true;
+  }
+
+  // 删掉一条或多条标注
+  async function removeItems(convId, ids) {
+    const g = await getGroup(convId);
+    if (!g) return 0;
+    const before = g.items.length;
+    g.items = g.items.filter((x) => !ids.includes(x.id));
+    await saveGroup(g);
+    return before - g.items.length;
+  }
+
+  // 备份提醒：记下上次导出备份的时间
+  const BACKUP_KEY = 'lastBackupAt';
+  const BACKUP_REMIND_DAYS = 30;
+  async function getLastBackup() {
+    const r = await chrome.storage.local.get(BACKUP_KEY);
+    return r[BACKUP_KEY] || null;
+  }
+  const markBackedUp = () => chrome.storage.local.set({ [BACKUP_KEY]: Date.now() });
+
+  // 给界面用的一句话：{ text, warn }；没有标注时返回 null（不需要提醒）
+  function backupStatus(lastAt, total) {
+    if (!total) return null;
+    if (!lastAt) return { text: '还没有备份过。标注只存在这台电脑的 Chrome 里，重装 Chrome 或清理浏览器数据会丢失，建议导出一份备份。', warn: true };
+    const days = Math.floor((Date.now() - lastAt) / 86400000);
+    const when = days < 1 ? '今天' : `${days} 天前`;
+    if (days >= BACKUP_REMIND_DAYS) return { text: `上次备份是 ${days} 天前，建议再导出一份新的备份。`, warn: true };
+    return { text: `上次备份：${when}`, warn: false };
+  }
+
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
   // swatch：界面上表示这个颜色的小圆点用的色值
@@ -71,5 +110,20 @@ globalThis.CR_ANN = (() => {
     { id: 'purple', label: '紫色', swatch: '#b197fc' },
   ];
 
-  return { key, PREFIX, getGroup, saveGroup, listGroups, importGroups, newId, COLORS };
+  return {
+    key,
+    PREFIX,
+    getGroup,
+    saveGroup,
+    listGroups,
+    importGroups,
+    updateItem,
+    removeItems,
+    BACKUP_KEY,
+    getLastBackup,
+    markBackedUp,
+    backupStatus,
+    newId,
+    COLORS,
+  };
 })();
