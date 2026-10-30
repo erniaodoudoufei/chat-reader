@@ -330,6 +330,18 @@ $('#an-enabled').addEventListener('change', (e) => {
 });
 $('#an-open-notes').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('notes/notes.html') }));
 
+// 备份提醒（规则和"我的笔记"页一样）
+(async () => {
+  const S = globalThis.CR_ANN;
+  const total = (await S.listGroups()).reduce((n, g) => n + g.items.length, 0);
+  const st = S.backupStatus(await S.getLastBackup(), total);
+  if (!st) return;
+  const line = $('#an-backup');
+  line.hidden = false;
+  line.textContent = (st.warn ? '⚠ ' : '') + st.text + (st.warn ? '（在「我的笔记」里导出）' : '');
+  line.classList.toggle('warn', st.warn);
+})();
+
 // ======================== 适配状态 ========================
 
 const ICONS = { ok: '✓', warn: '⚠', fail: '✗', info: '·' };

@@ -247,6 +247,8 @@ select:focus, input[type="text"]:focus { outline: none; border-color: var(--acce
 .btn:disabled { opacity: 0.4; cursor: default; }
 .actions { margin-top: 14px; display: flex; justify-content: flex-end; }
 .actions-left { justify-content: flex-start; margin-top: 8px; }
+.backup-line { font-size: 12px; margin: 10px 0 0; color: var(--muted); }
+.backup-line.warn { color: var(--warn); }
 .shortcut-row { display: flex; align-items: center; gap: 6px; }
 kbd {
   font: 12px/1 Consolas, monospace;
