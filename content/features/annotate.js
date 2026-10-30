@@ -1,4 +1,4 @@
-// 标注：选中文字 → 浮动工具栏（颜色高亮 / 波浪线 / 批注 / 解释）；点击已有标注可改颜色、写批注、删除；
+// 标注：选中文字 → 浮动工具栏（颜色高亮 / 波浪线 / 批注）；点击已有标注可改颜色、写批注、删除；
 // 右侧面板的"标注"标签页列出本对话的全部标注。
 //
 // 高亮用 CSS Custom Highlight API（CSS.highlights + ::highlight()）来画：只是在文字上"盖一层颜色"，不改页面元素。
@@ -378,10 +378,7 @@
     const note = h('button', 'tbtn', '✎ 批注');
     note.title = '高亮并写批注';
     note.addEventListener('click', guard(() => create({ color: 'yellow', style: 'hl', withNote: true })));
-    const explain = h('button', 'tbtn', '解释');
-    explain.disabled = true;
-    explain.title = '第三期开放：用 Gemini 解释选中的内容';
-    bar.append(wavy, note, explain);
+    bar.append(wavy, note);
     // 按下按钮时别让页面上的选区消失
     bar.addEventListener('mousedown', (e) => e.preventDefault());
 
